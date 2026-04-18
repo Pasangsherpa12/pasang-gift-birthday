@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tere Hawale | Immersive Experience</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Outfit:wght@100;300;600&family=Playfair+Display:ital,wght@0,900;1,900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #c5a367;
+            --crimson: #780001;
+            --dark: #0a0a0a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--dark);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        /* --- Scroll Snap Engine --- */
+        .viewport {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        section {
+            height: 100vh;
+            width: 100%;
+            scroll-snap-align: start;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            perspective: 1500px;
+        }
+
+        /* --- Global Elements --- */
+        #canvas-bg {
+            position: fixed;
+            top: 0; left: 0; z-index: -1;
+        }
+
+        .music-controller {
+            position: fixed;
+            top: 40px; right: 40px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--glass);
+            padding: 10px 20px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .visualizer-bar {
+            width: 3px; height: 15px;
+            background: var(--gold);
+            animation: bounce 0.5s ease infinite alternate;
+            display: none;
+        }
+
+        @keyframes bounce { from { height: 5px; } to { height: 25px; } }
+
+        /* --- Typography --- */
+        .hero-text {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 10vw, 8rem);
+            line-height: 0.9;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            text-align: center;
+        }
+
+        .gold-glow {
+            color: transparent;
+            -webkit-text-stroke: 1px var(--gold);
+            filter: drop-shadow(0 0 15px rgba(197, 163, 103, 0.3));
+        }
+
+        /* --- Photo Gallery 3D --- */
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            width: 80%;
+            max-width: 900px;
+            transform: rotateX(10deg) rotateZ(-2deg);
+        }
+
+        .photo-card {
+            position: relative;
+            aspect-ratio: 4/5;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            overflow: hidden;
+            transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .photo-card img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            filter: grayscale(40%) contrast(110%);
+            transition: 0.6s;
+        }
+
+        .photo-card:hover {
+            transform: translateZ(50px) scale(1.05);
+            border-color: var(--gold);
+        }
+
+        .photo-card:hover img { filter: grayscale(0%); }
+
+        .caption {
+            position: absolute;
+            bottom: 20px; left: 20px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: var(--gold);
+        }
+
+        /* --- Final Section --- */
+        .proposal-box {
+            background: linear-gradient(145deg, #111, #050505);
+            padding: 80px;
+            border-radius: 20px;
+            border: 1px solid var(--gold);
+            text-align: center;
+            box-shadow: 0 0 100px rgba(197, 163, 103, 0.1);
+        }
+
+        .btn-yes {
+            background: var(--gold);
+            color: var(--dark);
+            padding: 20px 80px;
+            border: none;
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            letter-spacing: 5px;
+            cursor: pointer;
+            margin-top: 40px;
+            transition: 0.5s;
+        }
+
+        .btn-yes:hover {
+            background: white;
+            box-shadow: 0 0 40px white;
+        }
+
+        /* --- Success Screen --- */
+        #victory {
+            position: fixed;
+            inset: 0;
+            background: var(--dark);
+            z-index: 5000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        /* --- Overlay Begin --- */
+        #intro {
+            position: fixed;
+            inset: 0;
+            background: var(--dark);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="intro" onclick="startExperience()">
+        <h2 style="font-family: 'Cinzel'; letter-spacing: 10px; color: var(--gold);">CLICK TO ENTER MY HEART</h2>
+    </div>
+
+    <canvas id="canvas-bg"></canvas>
+
+    <div class="music-controller">
+        <div class="visualizer-bar" style="display:block"></div>
+        <div class="visualizer-bar" style="display:block; animation-delay: 0.2s"></div>
+        <div class="visualizer-bar" style="display:block; animation-delay: 0.4s"></div>
+        <span id="track-name" style="font-size: 0.6rem; letter-spacing: 2px;">TERE HAWALE</span>
+    </div>
+
+    <audio id="audio" loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="viewport">
+        <!-- 1. HERO -->
+        <section>
+            <div class="hero-text">
+                DEAR <span class="gold-glow">CRUSH</span><br>
+                <span style="font-size: 0.2em; letter-spacing: 15px; font-family: 'Outfit';">A SYMPHONY FOR YOU</span>
+            </div>
+        </section>
+
+        <!-- 2. GALLERY 1 (2 Photos) -->
+        <section>
+            <div class="gallery-container">
+                <div class="photo-card">
+                    <img src="https://picsum.photos/400/500?random=1" alt="Photo 1">
+                    <div class="caption">MOMENT I</div>
+                </div>
+                <div class="photo-card" style="margin-top: 60px;">
+                    <img src="https://picsum.photos/400/500?random=2" alt="Photo 2">
+                    <div class="caption">MOMENT II</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. LYRICS INTERLUDE -->
+        <section>
+            <div style="max-width: 600px; text-align: center;">
+                <h2 style="font-family: 'Playfair Display'; font-style: italic; font-size: 3rem;">"Tere hawale hai yeh zindagi meri..."</h2>
+                <p style="margin-top: 20px; letter-spacing: 5px; color: var(--gold);">Everything I am, I find in you.</p>
+            </div>
+        </section>
+
+        <!-- 4. GALLERY 2 (2 Photos) -->
+        <section>
+            <div class="gallery-container">
+                <div class="photo-card">
+                    <img src="https://picsum.photos/400/500?random=3" alt="Photo 3">
+                    <div class="caption">MOMENT III</div>
+                </div>
+                <div class="photo-card" style="margin-top: 60px;">
+                    <img src="https://picsum.photos/400/500?random=4" alt="Photo 4">
+                    <div class="caption">MOMENT IV</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. GALLERY 3 (2 Photos) -->
+        <section>
+            <div class="gallery-container">
+                <div class="photo-card">
+                    <img src="https://picsum.photos/400/500?random=5" alt="Photo 5">
+                    <div class="caption">MOMENT V</div>
+                </div>
+                <div class="photo-card" style="margin-top: 60px;">
+                    <img src="https://picsum.photos/400/500?random=6" alt="Photo 6">
+                    <div class="caption">MOMENT VI</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. GALLERY 4 (2 Photos) -->
+        <section>
+            <div class="gallery-container">
+                <div class="photo-card">
+                    <img src="https://picsum.photos/400/500?random=7" alt="Photo 7">
+                    <div class="caption">MOMENT VII</div>
+                </div>
+                <div class="photo-card" style="margin-top: 60px;">
+                    <img src="https://picsum.photos/400/500?random=8" alt="Photo 8">
+                    <div class="caption">MOMENT VIII</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. THE ESSENCE -->
+        <section>
+            <div style="text-align: center; padding: 40px;">
+                <h1 style="font-family: 'Cinzel'; color: var(--gold);">THE TRUTH</h1>
+                <p style="max-width: 500px; margin: 20px auto; line-height: 2; font-weight: 100;">
+                    I didn't just want to tell you how I feel. I wanted to build a world where you could see it. You are the muse behind every line of this code.
+                </p>
+            </div>
+        </section>
+
+        <!-- 8. PROPOSAL -->
+        <section>
+            <div class="proposal-box">
+                <h2 style="font-family: 'Cinzel'; letter-spacing: 5px;">SO, I HAVE TO ASK...</h2>
+                <h1 style="font-family: 'Playfair Display'; font-size: 4rem; margin: 20px 0;">Will you be mine?</h1>
+                <button class="btn-yes" onclick="win()">YES</button>
+                <div id="no-trigger" onmouseover="moveNo()" style="display:inline-block; margin-left: 20px; opacity: 0.5; font-size: 0.7rem; cursor: not-allowed;">No</div>
+            </div>
+        </section>
+    </div>
+
+    <div id="victory">
+        <h1 style="font-family: 'Playfair Display'; font-size: 5rem; color: var(--gold);">Forever.</h1>
+        <p style="letter-spacing: 10px;">I'M THE HAPPIEST ALIVE ❤️</p>
+        <div style="font-size: 100px; margin-top: 20px;">💐</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.size > 0.2) this.size -= 0.001;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(197, 163, 103, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (particles.length < 100) particles.push(new Particle());
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].size <= 0.2) {
+                    particles.splice(i, 1);
+                    i--;
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        animateParticles();
+
+        function startExperience() {
+            document.getElementById('intro').style.display = 'none';
+            document.getElementById('audio').play();
+        }
+
+        function moveNo() {
+            const btn = document.getElementById('no-trigger');
+            btn.style.position = 'fixed';
+            btn.style.left = Math.random() * 80 + 'vw';
+            btn.style.top = Math.random() * 80 + 'vh';
+        }
+
+        function win() {
+            document.getElementById('victory').style.display = 'flex';
+            // Secret burst effect
+            for(let i=0; i<100; i++) {
+                const heart = document.createElement('div');
+                heart.innerHTML = '❤️';
+                heart.style.position = 'fixed';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.top = Math.random() * 100 + 'vh';
+                heart.style.fontSize = '20px';
+                heart.style.zIndex = '6000';
+                heart.style.animation = `fall 3s forwards`;
+                document.body.appendChild(heart);
+            }
+        }
+    </script>
+</body>
+</html>
